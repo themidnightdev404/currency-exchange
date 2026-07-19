@@ -1,0 +1,28 @@
+# binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# test
+*.test
+
+# build
+bin/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# logs
+*.log
+
+# SQLite database files
+*.db
+*.db-journal
+*.db-wal
+database/exchange.db
