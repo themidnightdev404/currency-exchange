@@ -2,35 +2,14 @@ package main
 
 import (
 	"currency-exchange/internal/database"
-	"database/sql"
-	"encoding/json"
+	"currency-exchange/internal/handlers"     // Импортируем хендлеры
+	"currency-exchange/internal/repositories" // Импортируем репозитории
 	"fmt"
 	"log"
 	"net/http"
 
-	"currency-exchange/internal/repositories"
-
 	_ "modernc.org/sqlite"
 )
-
-type application struct {
-	db *sql.DB
-}
-
-func (app *application) pingHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("pong"))
-}
-
-func (app *application) getCurrenciesHandler(w http.ResponseWriter, r *http.Request) {
-	repo := repositories.NewCurrencyRepository(app.db)
-	list, err := repo.FindAllCurrencies()
-	if err != nil {
-		http.Error(w, "база данных недоступна", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(list)
-}
 
 func main() {
 	// 1. Открываем БД
@@ -41,7 +20,7 @@ func main() {
 	defer db.Close()
 	fmt.Println("Успешно подключились к SQLite!")
 
-	// 2. Запуск SQL-миграций для создания таблиц
+	// 2. Запуск SQL-миграций
 	migrationPath := "migrations/001_init.sql"
 	err = database.RunMigrations(db, migrationPath)
 	if err != nil {
@@ -49,14 +28,19 @@ func main() {
 	}
 	fmt.Println("Миграция успешно применена!")
 
-	// 3. Настройка приложения и маршрутизатора
-	app := &application{db: db}
+	// 3. СВЯЗЫВАЕМ СЛОИ (Dependency Injection)
+	// Шаг А: Создаем репозиторий, отдаем ему базу
+	repo := repositories.NewCurrencyRepository(db)
+	// Шаг Б: Создаем хендлер, отдаем ему репозиторий
+	currencyHandler := handlers.NewCurrencyHandler(repo)
+
+	// 4. Настройка маршрутизатора
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/ping", app.pingHandler)
-	mux.HandleFunc("/currencies", app.getCurrenciesHandler)
+	mux.HandleFunc("/ping", currencyHandler.PingHandler)
+	mux.HandleFunc("/currencies", currencyHandler.GetCurrenciesHandler)
 
-	// 4. Запуск сервера
+	// 5. Запуск сервера
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
