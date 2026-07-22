@@ -15,17 +15,17 @@ CREATE TABLE IF NOT EXISTS exchange_rates (
     UNIQUE (base_currency_id, target_currency_id)
 );
 
-INSERT INTO
-    currencies (code, fullname, sign)
+INSERT
+    OR IGNORE INTO currencies (code, fullname, sign)
 VALUES
     ('USD', 'United States Dollar', '$');
 
-INSERT INTO
-    currencies (code, fullname, sign)
+INSERT
+    OR IGNORE INTO currencies (code, fullname, sign)
 VALUES
     ('EUR', 'Euro', '€');
 
-INSERT INTO
-    currencies (code, fullname, sign)
+INSERT
+    OR IGNORE INTO currencies (code, fullname, sign)
 VALUES
     ('RUB', 'Russian Ruble', '₽');
