@@ -1,8 +1,8 @@
 package models
 
 type Currency struct {
-	ID       int
-	Code     string
-	FullName string
-	Sign     string
+	ID       int    `json:"id"`
+	Code     string `json:"code"`
+	FullName string `json:"name"`
+	Sign     string `json:"sign"`
 }

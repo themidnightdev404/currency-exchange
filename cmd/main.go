@@ -2,11 +2,13 @@ package main
 
 import (
 	"currency-exchange/internal/database"
-	"currency-exchange/internal/repositories"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+
+	"currency-exchange/internal/repositories"
 
 	_ "modernc.org/sqlite"
 )
@@ -19,6 +21,17 @@ func (app *application) pingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
 }
 
+func (app *application) getCurrenciesHandler(w http.ResponseWriter, r *http.Request) {
+	repo := repositories.NewCurrencyRepository(app.db)
+	list, err := repo.FindAllCurrencies()
+	if err != nil {
+		http.Error(w, "база данных недоступна", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(list)
+}
+
 func main() {
 	// 1. Открываем БД
 	db, err := database.OpenDB("database/exchange.db")
@@ -28,35 +41,22 @@ func main() {
 	defer db.Close()
 	fmt.Println("Успешно подключились к SQLite!")
 
-	// 2. ВЫЗЫВАЕМ ВАШУ НОВУЮ ФУНКЦИЮ МИГРАЦИЙ
-	// Передаем ей открытую базу и путь к файлу
+	// 2. Запуск SQL-миграций для создания таблиц
 	migrationPath := "migrations/001_init.sql"
 	err = database.RunMigrations(db, migrationPath)
 	if err != nil {
 		log.Fatalf("Ошибка применения миграции: %v", err)
 	}
-	fmt.Println("Миграция успешно применена через database.RunMigrations!")
+	fmt.Println("Миграция успешно применена!")
 
-	// 3. Инициализируем репозиторий валют
-	repo := repositories.NewCurrencyRepository(db)
-
-	// 4. ВЫЗЫВАЕМ МЕТОД РЕПОЗИТОРИЯ И ВЫВОДИМ В КОНСОЛЬ
-	list, err := repo.FindAllCurrencies()
-	if err != nil {
-		log.Fatalf("Не удалось получить валюты: %v", err)
-	}
-
-	fmt.Println("\n--- СПИСОК ВАЛЮТ ИЗ БАЗЫ ДАННЫХ ---")
-	for _, c := range list {
-		fmt.Printf("ID: %d | Код: %s | Название: %s | Знак: %s\n", c.ID, c.Code, c.FullName, c.Sign)
-	}
-	fmt.Println("----------------------------------\n")
-
-	// 5. Настройка и запуск сервера
-	mux := http.NewServeMux()
+	// 3. Настройка приложения и маршрутизатора
 	app := &application{db: db}
-	mux.HandleFunc("/ping", app.pingHandler)
+	mux := http.NewServeMux()
 
+	mux.HandleFunc("/ping", app.pingHandler)
+	mux.HandleFunc("/currencies", app.getCurrenciesHandler)
+
+	// 4. Запуск сервера
 	fmt.Println("Сервер запущен на http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
