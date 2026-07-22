@@ -37,7 +37,6 @@ func main() {
 	// 4. Настройка маршрутизатора
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/ping", currencyHandler.PingHandler)
 	mux.HandleFunc("/currencies", currencyHandler.GetCurrenciesHandler)
 
 	// 5. Запуск сервера
