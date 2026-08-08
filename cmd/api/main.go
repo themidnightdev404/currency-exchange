@@ -15,7 +15,7 @@ func main() {
 
 	defer db.Close()
 
-	h := handlers.NewHandler()
+	h := handlers.NewCurrencyHandler()
 
 	routes := h.InitRoutes()
 
