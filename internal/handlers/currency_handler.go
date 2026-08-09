@@ -55,25 +55,29 @@ func (h *CurrencyHandler) GetCurrencyByCode(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *CurrencyHandler) CreateCurrency(w http.ResponseWriter, r *http.Request) {
-	var currency models.Currency
-
-	err := json.NewDecoder(r.Body).Decode(&currency)
+	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "Некорректный JSON", http.StatusBadRequest)
+		http.Error(w, "Не удалось распарсить форму", http.StatusBadRequest)
 		return
 	}
-
-	createdCurrency, err := h.service.CreateCurrency(r.Context(), &currency)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	nameCurrency := r.PostFormValue("name")
+	codeCurrency := r.PostFormValue("code")
+	signCurrency := r.PostFormValue("sign")
+	if nameCurrency == "" || codeCurrency == "" || signCurrency == "" {
+		http.Error(w, "Отсутствуют обязательные параметры формы", http.StatusBadRequest)
 		return
 	}
-
+	newCurrency := models.Currency{
+		FullName: nameCurrency,
+		Code:     codeCurrency,
+		Sign:     signCurrency,
+	}
+	createdCurrency, err := h.service.CreateCurrency(r.Context(), &newCurrency)
+	if err != nil {
+		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-
-	err = json.NewEncoder(w).Encode(createdCurrency)
-	if err != nil {
-		return
-	}
+	json.NewEncoder(w).Encode(createdCurrency)
 }

@@ -26,5 +26,3 @@ func main() {
 		log.Fatalf("Критическая ошибка при работе HTTP-сервера: %v", err)
 	}
 }
-
-// Этап 6. CreateRate GetRate GetRates UpdateRate

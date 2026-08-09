@@ -17,7 +17,7 @@ func NewCurrencyRepository(db *sql.DB) *CurrencyRepository {
 
 func (r *CurrencyRepository) CreateCurrency(ctx context.Context, currency *models.Currency) (*models.Currency, error) {
 	query := `
-		INSERT INTO currencies (Code, FullName, Sign)
+		INSERT INTO currencies (Code, Name, Sign)
 		VALUES (?, ?, ?)
 		RETURNING ID;
 	`
@@ -32,7 +32,7 @@ func (r *CurrencyRepository) CreateCurrency(ctx context.Context, currency *model
 
 func (r *CurrencyRepository) GetCurrencyByCode(ctx context.Context, code string) (*models.Currency, error) {
 	query := `
-		SELECT ID, Code, FullName, Sign FROM currencies WHERE Code = ?;
+		SELECT ID, Code, Name, Sign FROM currencies WHERE Code = ?;
 	`
 	var currency models.Currency
 	err := r.db.QueryRowContext(ctx, query, code).Scan(&currency.ID, &currency.Code, &currency.FullName, &currency.Sign)
@@ -44,7 +44,7 @@ func (r *CurrencyRepository) GetCurrencyByCode(ctx context.Context, code string)
 
 func (r *CurrencyRepository) GetCurrencies(ctx context.Context) ([]models.Currency, error) {
 	query := `
-		SELECT ID, Code, FullName, Sign FROM currencies;
+		SELECT ID, Code, Name, Sign FROM currencies;
 	`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
